@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>2025 GirlCrush Final Leader Board - Elite</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght=400;500;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background-color: #111827; color: #d1d5db; }
         .tab { transition: all 0.2s ease-in-out; }
@@ -55,36 +55,45 @@
     <script>
         // --- ⚠️ 주최자 설정 부분 ⚠️ ---
         const API_KEY = 'AIzaSyDiYqUz6S9MgxnSvsNLHe26wOj77YfXSHc';
-        // 🚨 새로운 스프레드시트 ID로 업데이트됨
+        // 🚨 스프레드시트 ID는 이전과 동일합니다.
         const SPREADSHEET_ID = '1q7teMssrKOyZhHiwmVVCzT42KykrU411f_RdW3YJBmc'; 
 
         // Elite 디비전과 모든 이벤트 탭에 해당하는 시트 정보 설정
-        // 🚨 아래 range 값들은 사용하시는 스프레드시트의 실제 시트 이름 및 범위에 맞춰 수정해야 합니다!
+        // 🚨 모든 범위가 '결과지' 시트로 업데이트되었습니다!
         const SHEET_DATA_MAP = {
-            // EVENT 1 - 일반적인 점수판 (standard)
+            // EVENT 1: '결과지'!A43:D59
             event1: {
-                Elite: { range: "'Event1'!A:D", type: 'standard', wodRange: "'Event1'!E1" },
+                // ⚠️ WOD 범위 E43 셀을 실제 WOD 설명이 있는 셀로 수정해주세요!
+                Elite: { range: "'결과지'!A43:D59", type: 'standard', wodRange: "'결과지'!E43" },
             },
-            // EVENT 2 - 일반적인 점수판
+            // EVENT 2: '결과지'!F43:I59
             event2: {
-                Elite: { range: "'Event2'!A:D", type: 'standard', wodRange: "'Event2'!E1" },
+                // ⚠️ WOD 범위 J43 셀을 실제 WOD 설명이 있는 셀로 수정해주세요!
+                Elite: { range: "'결과지'!F43:I59", type: 'standard', wodRange: "'결과지'!J43" },
             },
-            // EVENT 3 - 일반적인 점수판
+            // EVENT 3: '결과지'!L43:O59
             event3: {
-                Elite: { range: "'Event3'!A:D", type: 'standard', wodRange: "'Event3'!E1" },
+                // ⚠️ WOD 범위 P43 셀을 실제 WOD 설명이 있는 셀로 수정해주세요!
+                Elite: { range: "'결과지'!L43:O59", type: 'standard', wodRange: "'결과지'!P43" },
             },
-            // EVENT 4 - 일반적인 점수판
+            // EVENT 4: '결과지'!Q43:S59 (Tiebreak 없음)
             event4: {
-                Elite: { range: "'Event4'!A:D", type: 'standard', wodRange: "'Event4'!E1" },
+                // ⚠️ WOD 범위 T43 셀을 실제 WOD 설명이 있는 셀로 수정해주세요!
+                Elite: { range: "'결과지'!Q43:S59", type: 'standard', wodRange: "'결과지'!T43" },
             },
-            // Timetable - 시간표 테이블 (timetable)
+            // Timetable: 'timetable'!A1:F24 로 업데이트
             timetable: {
-                Elite: { range: "'Timetable'!A:C", type: 'timetable', wodRange: null },
+                Elite: { range: "'timetable'!A1:F24", type: 'timetable', wodRange: null },
             },
-            // TOTAL RANK - 상세 정보 확장 가능한 점수판 (expandable)
+            // TOTAL RANK: V43:X59 (보이는 열) + Y43:AB59 (숨김 열) = V43:AB59
             total: {
                 // visibleCols: 3 은 (랭크, 팀명, 총점)만 보이고 나머지는 클릭 시 확장되게 설정
-                Elite: { range: "'TotalRank'!A:G", type: 'expandable', visibleCols: 3, hideSwitchRange: "'Settings'!B1" },
+                Elite: { 
+                    range: "'결과지'!V43:AB59", // 전체 범위 (7열)
+                    type: 'expandable', 
+                    visibleCols: 3, // 노출되는 열 수 (Rank, TeamName, Score)
+                    hideSwitchRange: "'Settings'!B1" 
+                },
             },
         };
         // ------------------------------------
@@ -118,8 +127,8 @@
                 tab.addEventListener('click', () => {
                     currentEvent = tab.dataset.tab;
                     
-                    // Timetable 탭이 선택되면 WOD 섹션을 숨깁니다.
-                    if (currentEvent === 'timetable') {
+                    // Timetable/Total 탭이 선택되면 WOD 섹션을 숨깁니다.
+                    if (currentEvent === 'timetable' || currentEvent === 'total') {
                         wodSection.style.display = 'none';
                     } else {
                         wodSection.style.display = 'block';
@@ -134,6 +143,9 @@
             wodToggleButton.addEventListener('click', () => {
                 wodContent.classList.toggle('hidden');
             });
+            
+            // 초기 로드 시 WOD 섹션 상태 설정 (default: event1)
+            wodSection.style.display = 'block';
         }
 
         function updateActiveTabs(tabs, activeTab, isDivision = false) {
@@ -156,11 +168,9 @@
             // currentDivision이 'Elite'로 고정되어 있음
             const config = SHEET_DATA_MAP[currentEvent] ? SHEET_DATA_MAP[currentEvent][currentDivision] : null; 
             if (!config || !config.range) {
-                // Timetable 탭의 경우 wodRange가 없으므로 별도 처리 필요 없음
-                if (currentEvent !== 'timetable') {
+                if (currentEvent !== 'timetable' && currentEvent !== 'total') {
                     displayError('설정 오류: 현재 탭의 시트 정보가 없습니다. SHEET_DATA_MAP을 확인하세요.');
                 }
-                // Timetable 탭의 경우, 에러 없이 데이터 가져오기로 넘어갑니다.
             }
             
             // Total 탭 숨김 처리 로직 유지
@@ -177,8 +187,8 @@
             }
             
             const leaderboardPromise = fetchData(config.range);
-            // Timetable 탭은 WOD가 없으므로 wodPromise를 null로 설정
-            const wodPromise = (currentEvent !== 'timetable' && config.wodRange) ? fetchData(config.wodRange) : Promise.resolve(null);
+            // Timetable/Total 탭이 아닐 때만 WOD를 가져옵니다.
+            const wodPromise = (currentEvent !== 'timetable' && currentEvent !== 'total' && config.wodRange) ? fetchData(config.wodRange) : Promise.resolve(null);
 
 
             try {
@@ -190,12 +200,13 @@
                      displayError('선택된 탭에 데이터가 없습니다. 시트 이름과 범위를 확인해주세요.');
                 }
                 
-                // Timetable이 아닐 때만 WOD 섹션을 처리합니다.
-                if (currentEvent !== 'timetable') {
+                // Timetable/Total이 아닐 때만 WOD 섹션을 처리합니다.
+                if (currentEvent !== 'timetable' && currentEvent !== 'total') {
                     if (wodResult && wodResult.length > 0 && wodResult[0][0]) {
                         wodSection.style.display = 'block';
                         wodContent.textContent = wodResult[0][0];
                     } else {
+                        // 데이터는 있지만 WOD 설명이 없는 경우
                         wodSection.style.display = 'none';
                     }
                 }
@@ -396,7 +407,17 @@
                 const detailsContainer = document.createElement('div');
                 detailsContainer.className = "bg-gray-800 p-4";
                 
-                let detailsHTML = '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-2 text-sm">';
+                let detailsHTML = '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-2 text-sm">';
+                
+                // 숨겨진 열의 개수에 맞게 레이아웃 조정 (4개 이벤트 기록이므로 4열 그리드로 변경)
+                const numHiddenCols = hiddenData.length;
+                let gridClass = 'grid-cols-1';
+                if (numHiddenCols >= 4) gridClass = 'lg:grid-cols-4';
+                else if (numHiddenCols === 3) gridClass = 'lg:grid-cols-3';
+                else if (numHiddenCols === 2) gridClass = 'sm:grid-cols-2';
+                
+                detailsHTML = `<div class="grid grid-cols-1 sm:grid-cols-2 ${gridClass} gap-x-8 gap-y-2 text-sm">`;
+
                 for (let j = 0; j < hiddenData.length; j++) {
                     detailsHTML += `<div><span class="font-semibold text-gray-400">${hiddenHeaders[j] || 'N/A'}:</span> <span class="text-white">${hiddenData[j] || 'N/A'}</span></div>`;
                 }
